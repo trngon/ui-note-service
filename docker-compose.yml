@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  ui-note-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ui-note-service
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    
+    # Data persistence for JSON storage
+    volumes:
+      - ./data:/app/data
+    
+    # Traefik labels for reverse proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ui-note-service.rule=Host(`note.ngon.info`)"
+      - "traefik.http.routers.ui-note-service.entrypoints=websecure"
+      - "traefik.http.routers.ui-note-service.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.ui-note-service-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.ui-note-service-http.rule=Host(`note.ngon.info`)"
+      - "traefik.http.routers.ui-note-service-http.entrypoints=web"
+      - "traefik.http.routers.ui-note-service-http.middlewares=ui-note-service-redirect"
+      - "traefik.http.services.ui-note-service.loadbalancer.server.port=3000"
+      
+      # Security headers
+      - "traefik.http.middlewares.ui-note-service-headers.headers.frameDeny=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.routers.ui-note-service.middlewares=ui-note-service-headers"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    
+    # Connect to traefik network
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true

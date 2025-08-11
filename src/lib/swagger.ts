@@ -24,7 +24,7 @@ const swaggerDefinition = {
       description: 'Development server',
     },
     {
-      url: 'https://ui-note-service.vercel.app',
+      url: 'https://note.ngon.info',
       description: 'Production server',
     },
   ],

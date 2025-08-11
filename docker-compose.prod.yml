@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  ui-note-service:
+    image: ui-note-service:latest
+    container_name: ui-note-service-prod
+    restart: unless-stopped
+    
+    # Environment variables for production
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXT_TELEMETRY_DISABLED=1
+    
+    # Data persistence for JSON storage
+    volumes:
+      - /opt/ui-note-service/data:/app/data
+      - /opt/ui-note-service/logs:/app/logs
+    
+    # Traefik labels for reverse proxy
+    labels:
+      - "traefik.enable=true"
+      
+      # HTTPS Router
+      - "traefik.http.routers.ui-note-service.rule=Host(`note.ngon.info`)"
+      - "traefik.http.routers.ui-note-service.entrypoints=websecure"
+      - "traefik.http.routers.ui-note-service.tls.certresolver=myresolver"
+      - "traefik.http.routers.ui-note-service.service=ui-note-service"
+      
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.ui-note-service-http.rule=Host(`note.ngon.info`)"
+      - "traefik.http.routers.ui-note-service-http.entrypoints=web"
+      - "traefik.http.routers.ui-note-service-http.middlewares=ui-note-service-redirect"
+      - "traefik.http.middlewares.ui-note-service-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.ui-note-service-redirect.redirectscheme.permanent=true"
+      
+      # Service configuration
+      - "traefik.http.services.ui-note-service.loadbalancer.server.port=3000"
+      
+      # Security headers middleware
+      - "traefik.http.middlewares.ui-note-service-headers.headers.frameDeny=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.ui-note-service-headers.headers.stsPreload=true"
+      
+      # Rate limiting middleware
+      - "traefik.http.middlewares.ui-note-service-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.ui-note-service-ratelimit.ratelimit.burst=50"
+      
+      # Apply middlewares to HTTPS router
+      - "traefik.http.routers.ui-note-service.middlewares=ui-note-service-headers,ui-note-service-ratelimit"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Connect to traefik network
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true

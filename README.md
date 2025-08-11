@@ -51,6 +51,28 @@ All endpoints include detailed request/response schemas, examples, and error cod
 - **Responsive Design**: Mobile-first Tailwind CSS design
 - **API Documentation**: Comprehensive Swagger/OpenAPI documentation
 
+## Deployment
+
+The application is containerized and ready for production deployment with Docker and Traefik.
+
+### Quick Deployment
+
+```bash
+# Build the application
+./scripts/build.sh
+
+# Deploy to production
+./scripts/deploy.sh
+```
+
+### Production URL
+- **Application**: https://note.ngon.info
+- **API Documentation**: https://note.ngon.info/docs
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+## Development
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
