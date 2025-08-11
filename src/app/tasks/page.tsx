@@ -12,10 +12,16 @@ import { Sidebar } from '@/components/ui/sidebar';
 import { KanbanBoard } from '@/components/tasks/kanban-board';
 import { TaskForm } from '@/components/tasks/task-form';
 import { TaskLabelManager } from '@/components/tasks/task-label-manager';
+import { TaskDetailModal } from '@/components/tasks/task-detail-modal';
 
 interface ViewState {
   type: 'board' | 'form';
   task?: Task | null;
+}
+
+interface ModalState {
+  isOpen: boolean;
+  task: Task | null;
 }
 
 /**
@@ -34,6 +40,7 @@ export default function TasksPage() {
   
   // UI state
   const [viewState, setViewState] = useState<ViewState>({ type: 'board' });
+  const [modalState, setModalState] = useState<ModalState>({ isOpen: false, task: null });
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
   
   // Loading states
@@ -131,6 +138,15 @@ export default function TasksPage() {
 
   const handleTaskEdit = (task: Task) => {
     setViewState({ type: 'form', task });
+    setModalState({ isOpen: false, task: null }); // Close modal if open
+  };
+
+  const handleTaskViewDetails = (task: Task) => {
+    setModalState({ isOpen: true, task });
+  };
+
+  const handleModalClose = () => {
+    setModalState({ isOpen: false, task: null });
   };
 
   const handleTaskDelete = async (taskId: string) => {
@@ -260,6 +276,7 @@ export default function TasksPage() {
                 onTaskEdit={handleTaskEdit}
                 onTaskDelete={handleTaskDelete}
                 onTaskStatusChange={handleTaskStatusChange}
+                onTaskViewDetails={handleTaskViewDetails}
                 isLoading={isTasksLoading}
               />
             )}
@@ -291,6 +308,16 @@ export default function TasksPage() {
           )}
         </div>
       </div>
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={modalState.task}
+        isOpen={modalState.isOpen}
+        onClose={handleModalClose}
+        onEdit={handleTaskEdit}
+        onDelete={handleTaskDelete}
+        onStatusChange={handleTaskStatusChange}
+      />
     </div>
   );
 }

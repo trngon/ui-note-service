@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Task, TaskStatus } from '@/types/task';
 
 interface TaskCardProps {
@@ -6,14 +7,18 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onViewDetails?: (task: Task) => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ 
   task, 
   onEdit, 
   onDelete, 
-  onStatusChange 
+  onStatusChange,
+  onViewDetails
 }) => {
+  const router = useRouter();
+
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit(task);
@@ -29,6 +34,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const handleStatusChange = (e: React.MouseEvent, newStatus: TaskStatus) => {
     e.stopPropagation();
     onStatusChange(task.id, newStatus);
+  };
+
+  const handleCardClick = () => {
+    if (onViewDetails) {
+      onViewDetails(task);
+    } else {
+      router.push(`/tasks/${task.id}`);
+    }
+  };
+
+  const handleViewDetailPage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/tasks/${task.id}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -79,7 +97,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const dueDateInfo = formatDueDate(task.dueDate);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 border border-gray-200 hover:border-indigo-300">
+    <div 
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 border border-gray-200 hover:border-indigo-300 cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
@@ -120,6 +141,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 className="block w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-md"
               >
                 Edit
+              </button>
+              <button
+                onClick={handleViewDetailPage}
+                className="block w-full text-left px-3 py-2 text-xs text-indigo-600 hover:bg-indigo-50"
+              >
+                View
               </button>
               <button
                 onClick={handleDelete}
