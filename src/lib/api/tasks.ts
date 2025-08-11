@@ -124,6 +124,21 @@ export const taskApi = {
       throw new Error(errorData.message || 'Failed to delete task');
     }
   },
+
+  async deleteAllDoneTasks(): Promise<number> {
+    const response = await fetch('/api/tasks?status=Done', {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData: TaskResponse = await response.json();
+      throw new Error(errorData.message || 'Failed to delete done tasks');
+    }
+
+    const data = await response.json();
+    return data.deletedCount || 0;
+  },
 };
 
 // Task Label API functions

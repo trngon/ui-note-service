@@ -3,7 +3,8 @@ import {
   findTasksByUserId, 
   createTask,
   findTaskLabelsByIds,
-  generateDefaultDueDate 
+  generateDefaultDueDate,
+  deleteAllDoneTasks 
 } from '@/lib/task-storage';
 import { CreateTaskRequest, TaskResponse, TaskStatus } from '@/types/task';
 
@@ -162,6 +163,79 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error creating task:', error);
+    return NextResponse.json<TaskResponse>(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/tasks:
+ *   delete:
+ *     tags:
+ *       - Tasks
+ *     summary: Delete all done tasks
+ *     description: Delete all tasks with status "Done" for the authenticated user
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [Done]
+ *         required: true
+ *         description: Must be "Done" to delete all done tasks
+ *     responses:
+ *       200:
+ *         description: Done tasks deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 deletedCount:
+ *                   type: number
+ *       400:
+ *         $ref: '#/components/responses/400'
+ *       401:
+ *         $ref: '#/components/responses/401'
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    // Get user ID from session
+    const userIdHeader = request.headers.get('x-user-id');
+    if (!userIdHeader) {
+      return NextResponse.json<TaskResponse>(
+        { success: false, message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+
+    // Only allow deleting all done tasks for safety
+    if (status !== 'Done') {
+      return NextResponse.json<TaskResponse>(
+        { success: false, message: 'Can only bulk delete tasks with status "Done"' },
+        { status: 400 }
+      );
+    }
+
+    const deletedCount = deleteAllDoneTasks(userIdHeader);
+
+    return NextResponse.json({
+      success: true,
+      message: `${deletedCount} done tasks deleted successfully`,
+      deletedCount,
+    });
+  } catch (error) {
+    console.error('Error deleting done tasks:', error);
     return NextResponse.json<TaskResponse>(
       { success: false, message: 'Internal server error' },
       { status: 500 }

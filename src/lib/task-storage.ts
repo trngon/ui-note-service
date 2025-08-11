@@ -195,6 +195,34 @@ export function deleteTask(id: string, userId: string): boolean {
 }
 
 /**
+ * Delete all tasks with Done status for a specific user
+ */
+export function deleteAllDoneTasks(userId: string): number {
+  const tasks = readTasks();
+  const doneTasks = tasks.filter(task => task.userId === userId && task.status === 'Done');
+  
+  // Delete associated files for all done tasks
+  doneTasks.forEach(task => {
+    task.files.forEach(file => {
+      try {
+        const filePath = path.join(TASK_UPLOADS_DIR, file.path);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error('Error deleting task file:', error);
+      }
+    });
+  });
+  
+  // Remove all done tasks for the user
+  const remainingTasks = tasks.filter(task => !(task.userId === userId && task.status === 'Done'));
+  writeTasks(remainingTasks);
+  
+  return doneTasks.length;
+}
+
+/**
  * Find a task label by ID
  */
 export function findTaskLabelById(id: string): TaskLabel | null {

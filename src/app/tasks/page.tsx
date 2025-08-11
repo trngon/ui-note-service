@@ -13,9 +13,10 @@ import { KanbanBoard } from '@/components/tasks/kanban-board';
 import { TaskForm } from '@/components/tasks/task-form';
 import { TaskLabelManager } from '@/components/tasks/task-label-manager';
 import { TaskDetailModal } from '@/components/tasks/task-detail-modal';
+import { TaskTable } from '@/components/tasks/task-table';
 
 interface ViewState {
-  type: 'board' | 'form';
+  type: 'board' | 'form' | 'table';
   task?: Task | null;
 }
 
@@ -181,6 +182,20 @@ export default function TasksPage() {
     setSelectedLabelId(labelId);
   };
 
+  const handleDeleteAllDone = async () => {
+    if (!confirm('Are you sure you want to delete all completed tasks? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const deletedCount = await taskApi.deleteAllDoneTasks();
+      await loadTasks();
+      console.log(`${deletedCount} done tasks deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting done tasks:', error);
+    }
+  };
+
   // Filter tasks based on selected label
   const filteredTasks = selectedLabelId 
     ? tasks.filter(task => task.labels.some(label => label.id === selectedLabelId))
@@ -237,18 +252,47 @@ export default function TasksPage() {
               </div>
             </div>
             
-            {viewState.type === 'board' && (
-              <button
-                onClick={() => setViewState({ type: 'form', task: null })}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                + New Task
-              </button>
-            )}
+            <div className="flex items-center space-x-4">
+              {/* View Toggle */}
+              {viewState.type !== 'form' && (
+                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setViewState({ type: 'board' })}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      viewState.type === 'board'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Board
+                  </button>
+                  <button
+                    onClick={() => setViewState({ type: 'table' })}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      viewState.type === 'table'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Table
+                  </button>
+                </div>
+              )}
+
+              {/* New Task Button */}
+              {viewState.type !== 'form' && (
+                <button
+                  onClick={() => setViewState({ type: 'form', task: null })}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  + New Task
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Stats Bar */}
-          {viewState.type === 'board' && (
+          {(viewState.type === 'board' || viewState.type === 'table') && (
             <div className="flex items-center space-x-6 mt-4 text-sm">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
@@ -277,6 +321,18 @@ export default function TasksPage() {
                 onTaskDelete={handleTaskDelete}
                 onTaskStatusChange={handleTaskStatusChange}
                 onTaskViewDetails={handleTaskViewDetails}
+                onDeleteAllDone={handleDeleteAllDone}
+                isLoading={isTasksLoading}
+              />
+            )}
+
+            {viewState.type === 'table' && (
+              <TaskTable
+                tasks={filteredTasks}
+                onTaskEdit={handleTaskEdit}
+                onTaskDelete={handleTaskDelete}
+                onTaskStatusChange={handleTaskStatusChange}
+                onTaskViewDetails={handleTaskViewDetails}
                 isLoading={isTasksLoading}
               />
             )}
@@ -295,7 +351,7 @@ export default function TasksPage() {
           </main>
 
           {/* Sidebar - Labels */}
-          {viewState.type === 'board' && (
+          {(viewState.type === 'board' || viewState.type === 'table') && (
             <aside className="w-80 bg-white border-l border-gray-200 p-6">
               <TaskLabelManager
                 labels={labels}

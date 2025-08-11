@@ -28,6 +28,7 @@ interface KanbanBoardProps {
   onTaskDelete: (taskId: string) => void;
   onTaskStatusChange: (taskId: string, status: TaskStatus) => void;
   onTaskViewDetails?: (task: Task) => void;
+  onDeleteAllDone?: () => void;
   isLoading?: boolean;
 }
 
@@ -93,10 +94,12 @@ interface DroppableColumnProps {
   title: string;
   bgColor: string;
   tasks: Task[];
+  allTasks: Task[]; // All tasks to show total counts
   onTaskEdit: (task: Task) => void;
   onTaskDelete: (taskId: string) => void;
   onTaskStatusChange: (taskId: string, status: TaskStatus) => void;
   onTaskViewDetails?: (task: Task) => void;
+  onDeleteAllDone?: () => void;
   getColumnIcon: (status: TaskStatus) => React.ReactNode;
 }
 
@@ -105,10 +108,12 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   title,
   bgColor,
   tasks,
+  allTasks,
   onTaskEdit,
   onTaskDelete,
   onTaskStatusChange,
   onTaskViewDetails,
+  onDeleteAllDone,
   getColumnIcon,
 }) => {
   const {
@@ -122,6 +127,10 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
     },
   });
 
+  // Get total count of all tasks for this status
+  const totalCount = allTasks.filter(task => task.status === status).length;
+  const isShowingLimited = status === 'Done' && totalCount > tasks.length;
+
   return (
     <div className="flex-1 min-w-0">
       {/* Column Header */}
@@ -131,10 +140,26 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
             {getColumnIcon(status)}
             <h2 className="font-semibold text-gray-900">{title}</h2>
           </div>
-          <span className="bg-white px-2 py-1 rounded-full text-sm font-medium text-gray-700">
-            {tasks.length}
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="bg-white px-2 py-1 rounded-full text-sm font-medium text-gray-700">
+              {isShowingLimited ? `${tasks.length} of ${totalCount}` : totalCount}
+            </span>
+            {status === 'Done' && totalCount > 0 && onDeleteAllDone && (
+              <button
+                onClick={onDeleteAllDone}
+                className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                title={`Delete all ${totalCount} done tasks`}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
+        {isShowingLimited && (
+          <p className="text-xs text-gray-600 mt-2">
+            Showing {tasks.length} most recent tasks
+          </p>
+        )}
       </div>
 
       {/* Column Content */}
@@ -177,6 +202,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onTaskDelete,
   onTaskStatusChange,
   onTaskViewDetails,
+  onDeleteAllDone,
   isLoading = false,
 }) => {
   const [activeTask, setActiveTask] = React.useState<Task | null>(null);
@@ -196,7 +222,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   ];
 
   const getTasksByStatus = (status: TaskStatus): Task[] => {
-    return tasks.filter(task => task.status === status);
+    const filteredTasks = tasks.filter(task => task.status === status);
+    
+    // For Done column, limit to 5 most recent tasks (by updatedAt)
+    if (status === 'Done') {
+      return filteredTasks
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 5);
+    }
+    
+    return filteredTasks;
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -287,10 +322,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               title={column.title}
               bgColor={column.bgColor}
               tasks={columnTasks}
+              allTasks={tasks}
               onTaskEdit={onTaskEdit}
               onTaskDelete={onTaskDelete}
               onTaskStatusChange={onTaskStatusChange}
               onTaskViewDetails={onTaskViewDetails}
+              onDeleteAllDone={onDeleteAllDone}
               getColumnIcon={getColumnIcon}
             />
           );
