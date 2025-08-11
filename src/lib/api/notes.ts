@@ -48,6 +48,22 @@ export const noteApi = {
     return data.notes || [];
   },
 
+  async getNote(noteId: string): Promise<Note> {
+    const response = await fetch(`/api/notes/${noteId}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch note');
+    }
+
+    const data: NoteResponse = await response.json();
+    if (!data.note) {
+      throw new Error('No note returned from server');
+    }
+    return data.note;
+  },
+
   async createNote(noteData: CreateNoteRequest): Promise<Note> {
     const response = await fetch('/api/notes', {
       method: 'POST',

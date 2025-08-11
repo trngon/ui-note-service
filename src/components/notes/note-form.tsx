@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Note, Label, CreateNoteRequest, UpdateNoteRequest } from '@/types/note';
+import { Note, Label, CreateNoteFormData, UpdateNoteRequest } from '@/types/note';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DragDropUpload } from '@/components/ui/drag-drop-upload';
 
 interface NoteFormProps {
   note?: Note | null;
   labels: Label[];
-  onSave: (data: CreateNoteRequest | UpdateNoteRequest) => Promise<void>;
+  onSave: (data: CreateNoteFormData | UpdateNoteRequest) => Promise<void>;
   onCancel: () => void;
   onFileUpload?: (files: File[]) => Promise<void>;
   isLoading?: boolean;
@@ -26,12 +26,16 @@ export const NoteForm: React.FC<NoteFormProps> = ({
     note?.labels.map(label => label.id) || []
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
       setSelectedLabelIds(note.labels.map(label => label.id));
+    } else {
+      // Reset pending files when switching to new note mode
+      setPendingFiles([]);
     }
   }, [note]);
 
@@ -61,6 +65,7 @@ export const NoteForm: React.FC<NoteFormProps> = ({
       title: title.trim(),
       content: content.trim(),
       labelIds: selectedLabelIds,
+      ...(note ? {} : { pendingFiles }), // Only include files for new notes
     };
 
     try {
@@ -70,6 +75,7 @@ export const NoteForm: React.FC<NoteFormProps> = ({
         setTitle('');
         setContent('');
         setSelectedLabelIds([]);
+        setPendingFiles([]);
       }
     } catch (error) {
       console.error('Error saving note:', error);
@@ -85,15 +91,29 @@ export const NoteForm: React.FC<NoteFormProps> = ({
   };
 
   const handleFileUpload = async (files: File[]) => {
-    if (onFileUpload) {
+    if (note && onFileUpload) {
+      // For existing notes, upload files immediately
       await onFileUpload(files);
+    } else {
+      // For new notes, store files temporarily until note is created
+      setPendingFiles(prev => [...prev, ...files]);
     }
   };
 
   const handleClipboardPaste = async (files: File[]) => {
-    if (onFileUpload) {
-      await onFileUpload(files);
-    }
+    await handleFileUpload(files);
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -156,24 +176,60 @@ export const NoteForm: React.FC<NoteFormProps> = ({
           )}
         </div>
 
-        {/* File Upload - Only show for existing notes */}
-        {note && onFileUpload && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              File Attachments
-            </label>
-            <DragDropUpload
-              onFileUpload={handleFileUpload}
-              onClipboardPaste={handleClipboardPaste}
-              maxFiles={5}
-              disabled={isLoading}
-              className="min-h-32"
-            />
-            <p className="mt-2 text-xs text-gray-500">
-              You can drag and drop files or paste images from clipboard. Files can be attached after the note is created.
-            </p>
-          </div>
-        )}
+        {/* File Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            File Attachments
+          </label>
+          <DragDropUpload
+            onFileUpload={handleFileUpload}
+            onClipboardPaste={handleClipboardPaste}
+            maxFiles={5}
+            disabled={isLoading}
+            className="min-h-32"
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            {note 
+              ? "You can drag and drop files or paste images from clipboard."
+              : "Files will be attached after the note is created. You can drag and drop files or paste images from clipboard."
+            }
+          </p>
+
+          {/* Pending Files List (for new notes) */}
+          {!note && pendingFiles.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <p className="text-sm font-medium text-gray-700">Files to attach:</p>
+              {pendingFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center min-w-0 flex-1">
+                    <svg className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {file.name}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(file.size)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePendingFile(index)}
+                    disabled={isLoading}
+                    className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 ml-2"
+                    title="Remove file"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Labels */}
         {labels.length > 0 && (

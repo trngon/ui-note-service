@@ -36,6 +36,10 @@ export interface CreateNoteRequest {
   labelIds?: string[];
 }
 
+export interface CreateNoteFormData extends CreateNoteRequest {
+  pendingFiles?: File[];
+}
+
 export interface UpdateNoteRequest {
   title?: string;
   content?: string;

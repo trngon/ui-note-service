@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoginSession } from '@/types/auth';
-import { Note, Label, CreateNoteRequest, UpdateNoteRequest } from '@/types/note';
+import { Note, Label, CreateNoteFormData, UpdateNoteRequest } from '@/types/note';
 import { noteApi, labelApi, fileApi } from '@/lib/api/notes';
 
 // Components
@@ -100,11 +100,30 @@ export default function NotePage() {
     }
   };
 
-  const handleCreateNote = async (data: CreateNoteRequest) => {
+  const handleCreateNote = async (data: CreateNoteFormData) => {
     try {
       setIsNoteActionLoading(true);
-      const newNote = await noteApi.createNote(data);
-      setNotes(prev => [newNote, ...prev]);
+      
+      // Create the note first
+      const { pendingFiles, ...noteData } = data;
+      const newNote = await noteApi.createNote(noteData);
+      
+      // If there are pending files, upload them to the newly created note
+      if (pendingFiles && pendingFiles.length > 0) {
+        try {
+          await fileApi.uploadMultipleFiles(newNote.id, pendingFiles);
+          // Get the updated note with files
+          const updatedNote = await noteApi.getNote(newNote.id);
+          setNotes(prev => [updatedNote, ...prev]);
+        } catch (fileError) {
+          console.error('Error uploading files to new note:', fileError);
+          // Still add the note even if file upload fails
+          setNotes(prev => [newNote, ...prev]);
+        }
+      } else {
+        setNotes(prev => [newNote, ...prev]);
+      }
+      
       setViewState({ type: 'list' });
     } catch (error) {
       console.error('Error creating note:', error);
@@ -132,11 +151,11 @@ export default function NotePage() {
     }
   };
 
-  const handleFormSave = async (data: CreateNoteRequest | UpdateNoteRequest) => {
+  const handleFormSave = async (data: CreateNoteFormData | UpdateNoteRequest) => {
     if (viewState.note) {
       await handleUpdateNote(data as UpdateNoteRequest);
     } else {
-      await handleCreateNote(data as CreateNoteRequest);
+      await handleCreateNote(data as CreateNoteFormData);
     }
   };
 
