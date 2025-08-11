@@ -116,6 +116,20 @@ export async function GET(
       headers.set('Content-Type', file.type);
       headers.set('Content-Length', file.size.toString());
       headers.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      
+      // Add headers for PDF viewing in iframe
+      if (file.type === 'application/pdf') {
+        headers.set('Content-Disposition', 'inline');
+        headers.set('X-Content-Type-Options', 'nosniff');
+        // Allow embedding in iframes for PDF preview
+        headers.set('X-Frame-Options', 'SAMEORIGIN');
+        // Modern CSP equivalent - allow same origin
+        headers.set('Content-Security-Policy', 'frame-ancestors \'self\'');
+      } else {
+        // For images, also allow iframe embedding
+        headers.set('X-Frame-Options', 'SAMEORIGIN');
+        headers.set('Content-Security-Policy', 'frame-ancestors \'self\'');
+      }
 
       return new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,

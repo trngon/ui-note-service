@@ -25,7 +25,13 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ file, noteId, onClose 
     setIsLoading(false);
     console.error('File preview error:', errorEvent);
     console.error('Failed URL:', viewUrl);
-    setError('Failed to load file');
+    console.error('File type:', file.type);
+    
+    if (isPdf) {
+      setError('PDF preview failed to load. This may be due to browser security settings that prevent iframe embedding.');
+    } else {
+      setError('Failed to load file');
+    }
   };
 
   const handleDownload = async () => {
@@ -78,7 +84,23 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ file, noteId, onClose 
               <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              <p className="text-gray-500">{error}</p>
+              <p className="text-gray-500 mb-4">{error}</p>
+              {isPdf && (
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={() => window.open(viewUrl, '_blank')}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    Open in new tab
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    Download PDF
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -102,13 +124,37 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ file, noteId, onClose 
               )}
 
               {isPdf && (
-                <iframe
-                  src={viewUrl}
-                  title={file.name}
-                  className="w-full h-full min-h-96"
-                  onLoad={handleLoad}
-                  onError={handleError}
-                />
+                <div className="w-full h-full min-h-96 flex flex-col">
+                  <iframe
+                    src={`${viewUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                    title={file.name}
+                    className="w-full flex-1 border-0"
+                    onLoad={handleLoad}
+                    onError={handleError}
+                    style={{ minHeight: '600px' }}
+                    sandbox="allow-same-origin allow-scripts allow-downloads"
+                  />
+                  {/* Fallback message for PDF viewing issues */}
+                  <div className="text-center p-4 bg-gray-50 border-t">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Having trouble viewing the PDF? 
+                    </p>
+                    <div className="flex justify-center space-x-4">
+                      <button
+                        onClick={() => window.open(viewUrl, '_blank')}
+                        className="text-indigo-600 hover:text-indigo-800 text-sm underline"
+                      >
+                        Open in new tab
+                      </button>
+                      <button
+                        onClick={handleDownload}
+                        className="text-indigo-600 hover:text-indigo-800 text-sm underline"
+                      >
+                        Download PDF
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </>
           )}

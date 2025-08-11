@@ -19,7 +19,11 @@ function getAuthHeaders(): Headers {
   if (storedUser) {
     try {
       const userData = JSON.parse(storedUser);
-      headers.set('x-user-id', userData.userId);
+      // Handle both userId and id fields for backwards compatibility
+      const userId = userData.userId || userData.id || '';
+      if (userId) {
+        headers.set('x-user-id', userId);
+      }
     } catch (error) {
       console.error('Error parsing user data:', error);
     }
@@ -171,14 +175,17 @@ export const fileApi = {
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
-        userId = userData.userId;
+        // Handle both userId and id fields for backwards compatibility
+        userId = userData.userId || userData.id || '';
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
     }
 
     const headers = new Headers();
-    headers.set('x-user-id', userId);
+    if (userId) {
+      headers.set('x-user-id', userId);
+    }
 
     const response = await fetch('/api/upload', {
       method: 'POST',
@@ -227,11 +234,19 @@ export const fileApi = {
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
-        userId = userData.userId;
+        // Handle both userId and id fields for backwards compatibility
+        userId = userData.userId || userData.id || '';
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
     }
+    
+    // Only add userId if it's not empty
+    if (!userId) {
+      console.warn('No user ID found for file view URL');
+      throw new Error('User authentication required');
+    }
+    
     return `/api/files/${fileId}/view?noteId=${noteId}&userId=${userId}`;
   },
 
