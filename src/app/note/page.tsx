@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginSession } from '@/types/auth';
 import { Note, Label, CreateNoteFormData, UpdateNoteRequest } from '@/types/note';
 import { noteApi, labelApi, fileApi } from '@/lib/api/notes';
@@ -10,12 +10,11 @@ import { noteApi, labelApi, fileApi } from '@/lib/api/notes';
 import { Sidebar } from '@/components/ui/sidebar';
 import { NoteList } from '@/components/notes/note-list';
 import { NoteForm } from '@/components/notes/note-form';
-import { NoteDetail } from '@/components/notes/note-detail';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { LabelFilter } from '@/components/labels/label-filter';
 
 interface ViewState {
-  type: 'list' | 'form' | 'detail';
+  type: 'list' | 'form';
   note?: Note | null;
 }
 
@@ -24,6 +23,8 @@ interface ViewState {
  */
 export default function NotePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editNoteId = searchParams.get('edit');
   
   // Authentication state
   const [user, setUser] = useState<LoginSession | null>(null);
@@ -68,6 +69,19 @@ export default function NotePage() {
       loadNotes();
     }
   }, [user]); // loadNotes and loadLabels are recreated on every render, so we don't include them
+
+  // Handle edit mode from URL parameters
+  useEffect(() => {
+    if (editNoteId && notes.length > 0) {
+      const noteToEdit = notes.find(note => note.id === editNoteId);
+      if (noteToEdit) {
+        setViewState({ type: 'form', note: noteToEdit });
+      } else {
+        // Note not found, redirect to list
+        router.replace('/note');
+      }
+    }
+  }, [editNoteId, notes, router]);
 
   // Reload notes when label filter changes
   useEffect(() => {
@@ -154,7 +168,7 @@ export default function NotePage() {
       setNotes(prev => prev.map(note => 
         note.id === updatedNote.id ? updatedNote : note
       ));
-      setViewState({ type: 'detail', note: updatedNote });
+      setViewState({ type: 'list' });
     } catch (error) {
       console.error('Error updating note:', error);
       throw error;
@@ -168,6 +182,18 @@ export default function NotePage() {
       await handleUpdateNote(data as UpdateNoteRequest);
     } else {
       await handleCreateNote(data as CreateNoteFormData);
+    }
+    // Clear edit parameter from URL when saving
+    if (editNoteId) {
+      router.replace('/note');
+    }
+  };
+
+  const handleFormCancel = () => {
+    setViewState({ type: 'list' });
+    // Clear edit parameter from URL when canceling
+    if (editNoteId) {
+      router.replace('/note');
     }
   };
 
@@ -186,14 +212,6 @@ export default function NotePage() {
       await fileApi.uploadFile(noteId, file);
       // Reload notes to get updated file list
       await loadNotes();
-      // Update the current view if it's showing the note detail
-      if (viewState.type === 'detail' && viewState.note?.id === noteId) {
-        const updatedNotes = await noteApi.getNotes();
-        const updatedNote = updatedNotes.find(n => n.id === noteId);
-        if (updatedNote) {
-          setViewState({ type: 'detail', note: updatedNote });
-        }
-      }
     } catch (error) {
       console.error('Error uploading file:', error);
       throw error;
@@ -225,10 +243,6 @@ export default function NotePage() {
       setNotes(prev => prev.map(note => 
         note.id === noteId ? updatedNote : note
       ));
-      // Update the current view if it's showing the note detail
-      if (viewState.type === 'detail' && viewState.note?.id === noteId) {
-        setViewState({ type: 'detail', note: updatedNote });
-      }
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;
@@ -278,8 +292,6 @@ export default function NotePage() {
               <h1 className="text-2xl font-bold text-gray-900">
                 {viewState.type === 'form' 
                   ? (viewState.note ? 'Edit Note' : 'Create Note')
-                  : viewState.type === 'detail' 
-                  ? 'Note Details'
                   : selectedLabelId 
                   ? `Notes - ${labels.find(l => l.id === selectedLabelId)?.name}`
                   : 'All Notes'
@@ -349,7 +361,7 @@ export default function NotePage() {
               notes={filteredNotes}
               onNoteEdit={(note) => setViewState({ type: 'form', note })}
               onNoteDelete={handleDeleteNote}
-              onNoteSelect={(note) => setViewState({ type: 'detail', note })}
+              onNoteSelect={(note) => router.push(`/note/${note.id}`)}
               isLoading={isNotesLoading}
             />
           )}
@@ -360,22 +372,8 @@ export default function NotePage() {
                 note={viewState.note}
                 labels={labels}
                 onSave={handleFormSave}
-                onCancel={() => setViewState({ type: 'list' })}
+                onCancel={handleFormCancel}
                 onFileUpload={handleMultipleFileUpload}
-                isLoading={isNoteActionLoading}
-              />
-            </div>
-          )}
-
-          {viewState.type === 'detail' && viewState.note && (
-            <div className="max-w-4xl mx-auto h-full">
-              <NoteDetail
-                note={viewState.note}
-                onEdit={(note) => setViewState({ type: 'form', note })}
-                onDelete={handleDeleteNote}
-                onClose={() => setViewState({ type: 'list' })}
-                onFileUpload={handleFileUpload}
-                onFileDelete={handleFileDelete}
                 isLoading={isNoteActionLoading}
               />
             </div>

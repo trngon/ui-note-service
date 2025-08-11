@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Note } from '@/types/note';
 
 interface NoteListProps {
@@ -126,13 +127,15 @@ export const NoteList: React.FC<NoteListProps> = ({
             {currentNotes.map((note) => (
               <tr 
                 key={note.id} 
-                className="hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={() => onNoteSelect(note)}
+                className="hover:bg-gray-50 transition-colors"
               >
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
+                  <Link 
+                    href={`/note/${note.id}`}
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors"
+                  >
                     {truncateText(note.title, 50)}
-                  </div>
+                  </Link>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-500 max-w-xs">
