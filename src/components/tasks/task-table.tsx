@@ -79,25 +79,26 @@ export const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-300">
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-fixed divide-y divide-gray-300">
         <thead className="bg-gray-50">
           <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="w-1/3 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Task
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="w-1/6 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="w-1/6 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Due Date
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="w-1/6 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Labels
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="w-1/12 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
               Created
             </th>
-            <th scope="col" className="relative px-6 py-3">
+            <th scope="col" className="w-1/12 relative px-3 py-3">
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -108,69 +109,78 @@ export const TaskTable: React.FC<TaskTableProps> = ({
             
             return (
               <tr key={task.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-1 min-w-0">
-                      <button
-                        onClick={() => onTaskViewDetails?.(task)}
-                        className="text-left block focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md"
-                      >
-                        <p className="text-sm font-medium text-gray-900 truncate hover:text-indigo-600">
-                          {task.title}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate mt-1">
-                          {task.content}
-                        </p>
-                      </button>
-                    </div>
+                <td className="px-3 py-3">
+                  <div className="min-w-0">
+                    <button
+                      onClick={() => onTaskViewDetails?.(task)}
+                      className="text-left block focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md w-full"
+                    >
+                      <p className="text-sm font-medium text-gray-900 truncate hover:text-indigo-600" title={task.title}>
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate mt-1" title={task.content}>
+                        {task.content.substring(0, 50)}{task.content.length > 50 ? '...' : ''}
+                      </p>
+                    </button>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-3">
                   <select
                     value={task.status}
                     onChange={(e) => onTaskStatusChange(task.id, e.target.value as TaskStatus)}
-                    className="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    className="text-xs border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 w-full"
                   >
                     <option value="Todo">Todo</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Done">Done</option>
                   </select>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm">
-                    <p className={dueDateStatus.className}>{dueDateStatus.text}</p>
-                    <p className="text-gray-500">{formatDate(task.dueDate)}</p>
+                <td className="px-3 py-3">
+                  <div className="text-xs min-w-0">
+                    <p className={`${dueDateStatus.className} truncate`} title={dueDateStatus.text}>
+                      {dueDateStatus.text}
+                    </p>
+                    <p className="text-gray-500 truncate">{formatDate(task.dueDate)}</p>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-wrap gap-1">
-                    {task.labels.map((label) => (
-                      <span
-                        key={label.id}
-                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
-                        style={{ backgroundColor: label.color }}
-                      >
-                        {label.name}
-                      </span>
-                    ))}
+                <td className="px-3 py-3">
+                  <div className="min-w-0">
+                    {task.labels.length > 0 ? (
+                      <div className="flex items-center gap-1">
+                        <span
+                          className="inline-block w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: task.labels[0].color }}
+                          title={task.labels.map(l => l.name).join(', ')}
+                        />
+                        <span className="text-xs text-gray-600 truncate">
+                          {task.labels.length === 1 ? task.labels[0].name : `${task.labels.length} labels`}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">No labels</span>
+                    )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(task.createdAt)}
+                <td className="px-3 py-3 text-xs text-gray-500 hidden sm:table-cell">
+                  <div className="truncate" title={formatDate(task.createdAt)}>
+                    {formatDate(task.createdAt).replace(/,.*/, '')}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center space-x-2">
+                <td className="px-3 py-3 text-right">
+                  <div className="flex items-center justify-end space-x-1">
                     <button
                       onClick={() => onTaskEdit(task)}
-                      className="text-indigo-600 hover:text-indigo-900"
+                      className="text-indigo-600 hover:text-indigo-900 text-xs p-1"
+                      title="Edit task"
                     >
-                      Edit
+                      ✏️
                     </button>
                     <button
                       onClick={() => onTaskDelete(task.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 text-xs p-1"
+                      title="Delete task"
                     >
-                      Delete
+                      🗑️
                     </button>
                   </div>
                 </td>
@@ -179,6 +189,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
