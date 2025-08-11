@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginSession } from '@/types/auth';
 import { Note, Label, CreateNoteFormData, UpdateNoteRequest } from '@/types/note';
@@ -19,9 +19,9 @@ interface ViewState {
 }
 
 /**
- * Notes page - Note management interface for authenticated users
+ * Notes page content component that uses useSearchParams
  */
-export default function NotePage() {
+function NotePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editNoteId = searchParams.get('edit');
@@ -381,5 +381,20 @@ export default function NotePage() {
         </main>
       </div>
     </div>
+  );
+}
+
+/**
+ * Notes page - Note management interface for authenticated users
+ */
+export default function NotePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    }>
+      <NotePageContent />
+    </Suspense>
   );
 }
