@@ -13,7 +13,6 @@ import { NoteForm } from '@/components/notes/note-form';
 import { NoteDetail } from '@/components/notes/note-detail';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { LabelFilter } from '@/components/labels/label-filter';
-import { LabelManager } from '@/components/labels/label-manager';
 
 interface ViewState {
   type: 'list' | 'form' | 'detail';
@@ -37,6 +36,7 @@ export default function NotePage() {
   // UI state
   const [viewState, setViewState] = useState<ViewState>({ type: 'list' });
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   
   // Loading states
   const [isNotesLoading, setIsNotesLoading] = useState(false);
@@ -87,6 +87,18 @@ export default function NotePage() {
       setIsNotesLoading(false);
     }
   };
+
+  // Filter notes based on search query
+  const filteredNotes = notes.filter(note => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      note.title.toLowerCase().includes(query) ||
+      note.content.toLowerCase().includes(query) ||
+      note.labels.some(label => label.name.toLowerCase().includes(query))
+    );
+  });
 
   const loadLabels = async () => {
     try {
@@ -166,28 +178,6 @@ export default function NotePage() {
       setViewState({ type: 'list' });
     } catch (error) {
       console.error('Error deleting note:', error);
-    }
-  };
-
-  const handleCreateLabel = async (data: { name: string; color: string }) => {
-    try {
-      const newLabel = await labelApi.createLabel(data);
-      setLabels(prev => [...prev, newLabel]);
-    } catch (error) {
-      console.error('Error creating label:', error);
-      throw error;
-    }
-  };
-
-  const handleDeleteLabel = async (labelId: string) => {
-    try {
-      await labelApi.deleteLabel(labelId);
-      setLabels(prev => prev.filter(label => label.id !== labelId));
-      // Reload notes to reflect label removal
-      await loadNotes();
-    } catch (error) {
-      console.error('Error deleting label:', error);
-      throw error;
     }
   };
 
@@ -297,7 +287,7 @@ export default function NotePage() {
               </h1>
               <p className="text-gray-600">
                 {viewState.type === 'list' && (
-                  `${notes.length} note${notes.length !== 1 ? 's' : ''}`
+                  `${filteredNotes.length} note${filteredNotes.length !== 1 ? 's' : ''}`
                 )}
               </p>
             </div>
@@ -312,20 +302,41 @@ export default function NotePage() {
             )}
           </div>
 
-          {/* Label Filter and Management */}
+          {/* Search and Filter */}
           {viewState.type === 'list' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search notes by title, content, or labels..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              {/* Label Filter - Full Width */}
               <LabelFilter
                 labels={labels}
                 selectedLabelId={selectedLabelId}
                 onLabelSelect={setSelectedLabelId}
                 noteCountByLabel={noteCountByLabel}
-              />
-              <LabelManager
-                labels={labels}
-                onCreateLabel={handleCreateLabel}
-                onDeleteLabel={handleDeleteLabel}
-                isLoading={isLabelsLoading}
               />
             </div>
           )}
@@ -335,7 +346,7 @@ export default function NotePage() {
         <main className="flex-1 p-6">
           {viewState.type === 'list' && (
             <NoteList
-              notes={notes}
+              notes={filteredNotes}
               onNoteEdit={(note) => setViewState({ type: 'form', note })}
               onNoteDelete={handleDeleteNote}
               onNoteSelect={(note) => setViewState({ type: 'detail', note })}
