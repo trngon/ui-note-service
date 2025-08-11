@@ -16,11 +16,11 @@ sudo chown $USER:$USER /opt/ui-note-service/logs
 
 # Stop existing container if running
 echo "🛑 Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down || true
+docker compose -f docker-compose.prod.yml down || true
 
 # Deploy with production compose file
 echo "🔄 Starting production deployment..."
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 # Wait for container to be healthy
 echo "⏳ Waiting for service to be healthy..."
@@ -28,11 +28,11 @@ sleep 10
 
 # Check container status
 echo "📊 Container status:"
-docker-compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 # Show logs
 echo "📝 Recent logs:"
-docker-compose -f docker-compose.prod.yml logs --tail=20
+docker compose -f docker-compose.prod.yml logs --tail=20
 
 echo "✅ Deployment complete!"
 echo "🌐 Service should be available at: https://note.ngon.info"
