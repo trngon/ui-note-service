@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { LoginSession } from '@/types/auth';
 
 /**
@@ -58,6 +59,12 @@ export default function DashboardPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link
+                href="/docs"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                API Docs
+              </Link>
               <span className="text-gray-700">Welcome, {user.name}!</span>
               <button
                 onClick={handleSignOut}

@@ -28,6 +28,29 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
+## API Documentation
+
+The project includes comprehensive API documentation using OpenAPI/Swagger:
+
+- **Interactive Documentation**: Visit [http://localhost:3001/docs](http://localhost:3001/docs) for the full API documentation
+- **JSON Specification**: Access the raw OpenAPI spec at [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
+
+### Current API Endpoints
+
+#### Authentication
+- `POST /api/auth/signup` - Register a new user
+- `POST /api/auth/signin` - Authenticate user
+
+All endpoints include detailed request/response schemas, examples, and error codes.
+
+## Features
+
+- **User Authentication**: Complete signup and signin functionality
+- **Data Storage**: JSON file-based user storage
+- **Form Validation**: Client and server-side validation
+- **Responsive Design**: Mobile-first Tailwind CSS design
+- **API Documentation**: Comprehensive Swagger/OpenAPI documentation
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

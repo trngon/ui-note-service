@@ -83,3 +83,34 @@ When creating new forms, follow these Tailwind CSS patterns:
 - Implement real-time validation feedback
 - Show password strength indicators for password fields
 - Clear errors when user starts typing
+
+## API Documentation Guidelines
+When implementing new API routes, follow these documentation patterns:
+
+### Swagger/OpenAPI Documentation
+- Add comprehensive Swagger JSDoc comments to all API routes
+- Use `@swagger` comments above route handlers
+- Include all HTTP methods, request/response schemas, and examples
+- Document error responses with proper status codes
+- Use TypeScript interfaces from `src/types/` for consistent schemas
+
+### API Route Structure
+- Follow RESTful conventions for endpoint naming
+- Use proper HTTP status codes (200, 201, 400, 401, 404, 409, 500)
+- Include detailed error messages and validation feedback
+- Implement consistent response format using `AuthResponse` interface
+- Add request/response examples in Swagger documentation
+
+### Documentation Components
+- API documentation is available at `/docs` page
+- JSON specification endpoint at `/api/docs`
+- Use `src/lib/swagger.ts` for OpenAPI configuration
+- Follow established schema patterns in components section
+- Include authentication requirements and security considerations
+
+### API Implementation Patterns
+- Validate input data on both client and server side
+- Use TypeScript interfaces for request/response types
+- Implement proper error handling with descriptive messages
+- Follow established patterns from `src/app/api/auth/` routes
+- Include JSDoc comments for all functions and complex logic

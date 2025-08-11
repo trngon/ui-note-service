@@ -3,6 +3,49 @@ import { createUser, findUserByEmail } from '@/lib/user-storage';
 import { SignupRequest, AuthResponse } from '@/types/auth';
 
 /**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Register a new user
+ *     description: Create a new user account with email, password, and name
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SignupRequest'
+ *           example:
+ *             name: "John Doe"
+ *             email: "john.doe@example.com"
+ *             password: "securePassword123"
+ *             confirmPassword: "securePassword123"
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *             example:
+ *               success: true
+ *               message: "User created successfully"
+ *               user:
+ *                 id: "user_4tuq9tqd2jwyqyc7h0a2b"
+ *                 email: "john.doe@example.com"
+ *                 name: "John Doe"
+ *                 createdAt: "2025-08-11T11:22:26.209Z"
+ *                 updatedAt: "2025-08-11T11:22:26.209Z"
+ *       400:
+ *         $ref: '#/components/responses/400'
+ *       409:
+ *         $ref: '#/components/responses/409'
+ *       500:
+ *         $ref: '#/components/responses/500'
+ */
+
+/**
  * POST /api/auth/signup
  * Handle user registration
  */

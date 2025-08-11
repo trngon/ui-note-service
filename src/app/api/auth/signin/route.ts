@@ -3,6 +3,47 @@ import { findUserByEmail } from '@/lib/user-storage';
 import { AuthRequest, AuthResponse } from '@/types/auth';
 
 /**
+ * @swagger
+ * /api/auth/signin:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Authenticate user
+ *     description: Sign in with email and password to get user session
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SigninRequest'
+ *           example:
+ *             email: "john.doe@example.com"
+ *             password: "securePassword123"
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *             example:
+ *               success: true
+ *               message: "Login successful"
+ *               user:
+ *                 id: "user_4tuq9tqd2jwyqyc7h0a2b"
+ *                 email: "john.doe@example.com"
+ *                 name: "John Doe"
+ *                 createdAt: "2025-08-11T11:22:26.209Z"
+ *                 updatedAt: "2025-08-11T11:22:26.209Z"
+ *       400:
+ *         $ref: '#/components/responses/400'
+ *       401:
+ *         $ref: '#/components/responses/401'
+ *       500:
+ *         $ref: '#/components/responses/500'
+ */
+
+/**
  * POST /api/auth/signin
  * Handle user authentication
  */
