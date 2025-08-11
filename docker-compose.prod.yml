@@ -87,8 +87,7 @@ services:
     
     # Connect to traefik network
     networks:
-      - traefik
-
+      main_default:
 networks:
-  traefik:
+  main_default:
     external: true
