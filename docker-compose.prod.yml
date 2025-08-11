@@ -21,7 +21,6 @@ services:
     # Traefik labels for reverse proxy
     labels:
       - "traefik.enable=true"
-      
       # HTTPS Router
       - "traefik.http.routers.ui-note-service.rule=Host(`note.ngon.info`)"
       - "traefik.http.routers.ui-note-service.entrypoints=websecure"
@@ -57,7 +56,7 @@ services:
     
     # Health check
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
