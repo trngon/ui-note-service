@@ -191,6 +191,25 @@ export default function NotePage() {
     }
   };
 
+  const handleMultipleFileUpload = async (files: File[]) => {
+    if (viewState.type === 'form' && viewState.note) {
+      try {
+        await fileApi.uploadMultipleFiles(viewState.note.id, files);
+        // Reload notes to get updated file list
+        await loadNotes();
+        // Update the current view if it's showing the note detail
+        const updatedNotes = await noteApi.getNotes();
+        const updatedNote = updatedNotes.find(n => n.id === viewState.note!.id);
+        if (updatedNote) {
+          setViewState({ type: 'form', note: updatedNote });
+        }
+      } catch (error) {
+        console.error('Error uploading files:', error);
+        throw error;
+      }
+    }
+  };
+
   const handleFileDelete = async (noteId: string, fileId: string) => {
     try {
       const updatedNote = await fileApi.deleteFile(noteId, fileId);
@@ -312,6 +331,7 @@ export default function NotePage() {
                 labels={labels}
                 onSave={handleFormSave}
                 onCancel={() => setViewState({ type: 'list' })}
+                onFileUpload={handleMultipleFileUpload}
                 isLoading={isNoteActionLoading}
               />
             </div>

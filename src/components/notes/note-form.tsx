@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Note, Label, CreateNoteRequest, UpdateNoteRequest } from '@/types/note';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { DragDropUpload } from '@/components/ui/drag-drop-upload';
 
 interface NoteFormProps {
   note?: Note | null;
   labels: Label[];
   onSave: (data: CreateNoteRequest | UpdateNoteRequest) => Promise<void>;
   onCancel: () => void;
+  onFileUpload?: (files: File[]) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -15,6 +17,7 @@ export const NoteForm: React.FC<NoteFormProps> = ({
   labels, 
   onSave, 
   onCancel, 
+  onFileUpload,
   isLoading = false 
 }) => {
   const [title, setTitle] = useState(note?.title || '');
@@ -81,6 +84,18 @@ export const NoteForm: React.FC<NoteFormProps> = ({
     );
   };
 
+  const handleFileUpload = async (files: File[]) => {
+    if (onFileUpload) {
+      await onFileUpload(files);
+    }
+  };
+
+  const handleClipboardPaste = async (files: File[]) => {
+    if (onFileUpload) {
+      await onFileUpload(files);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
@@ -140,6 +155,25 @@ export const NoteForm: React.FC<NoteFormProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.content}</p>
           )}
         </div>
+
+        {/* File Upload - Only show for existing notes */}
+        {note && onFileUpload && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              File Attachments
+            </label>
+            <DragDropUpload
+              onFileUpload={handleFileUpload}
+              onClipboardPaste={handleClipboardPaste}
+              maxFiles={5}
+              disabled={isLoading}
+              className="min-h-32"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              You can drag and drop files or paste images from clipboard. Files can be attached after the note is created.
+            </p>
+          </div>
+        )}
 
         {/* Labels */}
         {labels.length > 0 && (
