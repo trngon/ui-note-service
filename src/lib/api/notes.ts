@@ -205,7 +205,18 @@ export const fileApi = {
   },
 
   getViewUrl(noteId: string, fileId: string): string {
-    return `/api/files/${fileId}/view?noteId=${noteId}`;
+    // Get user ID for auth
+    const storedUser = localStorage.getItem('user');
+    let userId = '';
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        userId = userData.userId;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return `/api/files/${fileId}/view?noteId=${noteId}&userId=${userId}`;
   },
 
   async downloadFile(noteId: string, fileId: string, fileName: string): Promise<void> {

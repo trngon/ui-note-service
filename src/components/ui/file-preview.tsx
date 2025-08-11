@@ -18,10 +18,13 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ file, noteId, onClose 
 
   const handleLoad = () => {
     setIsLoading(false);
+    setError(null);
   };
 
-  const handleError = () => {
+  const handleError = (errorEvent: any) => {
     setIsLoading(false);
+    console.error('File preview error:', errorEvent);
+    console.error('Failed URL:', viewUrl);
     setError('Failed to load file');
   };
 

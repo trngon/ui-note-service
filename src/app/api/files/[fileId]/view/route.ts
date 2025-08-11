@@ -27,6 +27,12 @@ import {
  *         schema:
  *           type: string
  *         description: The note ID that contains the file
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The user ID for authentication
  *     responses:
  *       200:
  *         description: File content for viewing
@@ -50,16 +56,9 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    const userIdHeader = request.headers.get('x-user-id');
-    if (!userIdHeader) {
-      return NextResponse.json(
-        { success: false, message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const noteId = searchParams.get('noteId');
+    const userId = searchParams.get('userId');
 
     if (!noteId) {
       return NextResponse.json(
@@ -68,8 +67,15 @@ export async function GET(
       );
     }
 
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: 'User ID is required' },
+        { status: 401 }
+      );
+    }
+
     // Verify note exists and belongs to user
-    const note = findNoteByIdAndUserId(noteId, userIdHeader);
+    const note = findNoteByIdAndUserId(noteId, userId);
     if (!note) {
       return NextResponse.json(
         { success: false, message: 'Note not found' },
