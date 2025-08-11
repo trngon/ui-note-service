@@ -1,5 +1,6 @@
 import React from 'react';
 import { Note } from '@/types/note';
+import { fileApi } from '@/lib/api/notes';
 
 interface NoteCardProps {
   note: Note;
@@ -29,6 +30,15 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete, onSe
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleFileDownload = async (e: React.MouseEvent, fileId: string, fileName: string) => {
+    e.stopPropagation();
+    try {
+      await fileApi.downloadFile(note.id, fileId, fileName);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
   };
 
   return (
@@ -85,13 +95,34 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete, onSe
 
       {/* Files */}
       {note.files.length > 0 && (
-        <div className="flex items-center gap-2 mb-4">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 00-2.828-2.828l-6.586 6.586a2 2 0 102.828 2.828L13 7" />
-          </svg>
-          <span className="text-xs text-gray-500">
-            {note.files.length} file{note.files.length > 1 ? 's' : ''}
-          </span>
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 00-2.828-2.828l-6.586 6.586a2 2 0 102.828 2.828L13 7" />
+            </svg>
+            <span className="text-xs text-gray-500">
+              {note.files.length} file{note.files.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="space-y-1">
+            {note.files.slice(0, 3).map((file) => (
+              <div key={file.id} className="flex items-center justify-between text-xs">
+                <span className="text-gray-600 truncate flex-1 mr-2">{file.name}</span>
+                <button
+                  onClick={(e) => handleFileDownload(e, file.id, file.name)}
+                  className="text-indigo-600 hover:text-indigo-800 flex-shrink-0"
+                  title="Download file"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {note.files.length > 3 && (
+              <p className="text-xs text-gray-400">...and {note.files.length - 3} more</p>
+            )}
+          </div>
         </div>
       )}
 
