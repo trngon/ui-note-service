@@ -5,7 +5,7 @@ import {
   deleteNote,
   findLabelsByIds 
 } from '@/lib/note-storage';
-import { UpdateNoteRequest, NoteResponse } from '@/types/note';
+import { UpdateNoteRequest, NoteResponse, Label } from '@/types/note';
 
 /**
  * @swagger
@@ -36,8 +36,9 @@ import { UpdateNoteRequest, NoteResponse } from '@/types/note';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const userIdHeader = request.headers.get('x-user-id');
     if (!userIdHeader) {
@@ -111,8 +112,9 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const userIdHeader = request.headers.get('x-user-id');
     if (!userIdHeader) {
@@ -128,7 +130,7 @@ export async function PUT(
     const updateData: Partial<{
       title: string;
       content: string;
-      labels: any[];
+      labels: Label[];
     }> = {};
     if (body.title !== undefined) updateData.title = body.title;
     if (body.content !== undefined) updateData.content = body.content;
@@ -188,8 +190,9 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const userIdHeader = request.headers.get('x-user-id');
     if (!userIdHeader) {
